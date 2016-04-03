@@ -5,7 +5,7 @@
 ####################################################################################################
 import messages
 import bookmarks
-#from updater import Updater
+from updater import Updater
 from DumbTools import DumbKeyboard
 from DumbTools import DumbPrefs
 
@@ -30,8 +30,7 @@ BM = bookmarks.Bookmark(TITLE, PREFIX, ICON_BM_ADD, ICON_BM_REMOVE)
 
 ####################################################################################################
 def Start():
-    HTTP.CacheTime = 0
-    #HTTP.CacheTime = CACHE_1HOUR
+    HTTP.CacheTime = CACHE_1HOUR
 
     ObjectContainer.title1 = TITLE
     ObjectContainer.art = R(ART)
@@ -48,11 +47,10 @@ def Start():
 def MainMenu():
     """Setup Main Menu, Includes Updater"""
 
-    #oc = ObjectContainer(title2=TITLE, no_cache=True)
-    oc = ObjectContainer(title2=TITLE)
+    oc = ObjectContainer(title2=TITLE, no_cache=True)
     mhref = '/movie'
 
-    #Updater(PREFIX + '/updater', oc)
+    Updater(PREFIX + '/updater', oc)
 
     oc.add(DirectoryObject(
         key=Callback(DirectoryList, title='Most Recent', href='%s?sort=published' %mhref, page=1),

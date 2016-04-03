@@ -11,7 +11,7 @@ This is a plugin that creates a new Video Channel in [Plex Media Server](https:/
 - Video quality 360p & 720p
 - Custom Bookmarks
 - Video Search
-- ~~Update from within channel~~ _(will be available next release)_
+- Update from within channel
 
 ## How To Install
 
