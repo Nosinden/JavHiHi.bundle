@@ -1,0 +1,177 @@
+#!/usr/bin/env python
+
+"""JavHiHi Service Code"""
+
+from openload import decode_openload
+from subprefs import GetPrefs
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    """
+    This function should create and return a metadata object (for example, a VideoClipOb-
+    ject) and populate it with metadata from the given URL. Only the metadata should be
+    added here - the object's key and rating_key properties will be synthesised based on the URL.
+    """
+
+    #Log.Debug('*' * 80)
+
+    html = HTML.ElementFromURL(url)
+
+    time_stamp = int(Datetime.TimestampFromDatetime(Datetime.Now()))
+    thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+    art = '/:/plugins/com.plexapp.plugins.javhihi/resources/art-default.jpg?t=%s' %time_stamp
+
+    likes = html.xpath('//span[starts-with(@class, "like-count-movie")]/text()')[0].strip()
+    views = html.xpath('//div[@class="movie-view"]/button/text()')[0].strip()
+    tagline = 'Likes: %s | Views: %s' %(likes, views)
+
+    for md in html.xpath('//div[@class="box movie-detail"]'):
+        title = md.xpath('./h1/text()')[0].strip()
+
+        p0 = md.xpath('./p')[0].text_content().strip()
+        date = Regex('Release Date\:\ (.*)\,').search(p0).group(1)
+        dur = Regex('Duration\:\ (\d+)(.+)').search(p0)
+        duration = int(dur.group(1).strip()) * (60000 if 'min' in dur.group(2) else 3600000)
+
+        summary = md.xpath('./p')[1].text_content().strip()
+        genres = md.xpath('//ul[@class="links links-categories"]/li/a/text()')
+        tags = md.xpath('//ul[@class="links links-tags"]/li/a/text()')
+
+    #Log.Debug('* title                  = %s' %title)
+    #Log.Debug('* tagline                = %s' %tagline)
+    #Log.Debug('* duration               = %i' %duration)
+    #Log.Debug('* genres                 = %s' %genres)
+    #Log.Debug('* tags                   = %s' %tags)
+    #Log.Debug('* summary                = %s' %summary)
+    #Log.Debug('*' * 80)
+
+    vco = VideoClipObject(
+        title=title,
+        source_title='JavHiHi',
+        tagline=tagline,
+        summary=summary,
+        duration=duration,
+        genres=genres,
+        tags=tags,
+        originally_available_at=Datetime.ParseDate(date),
+        year=int(Datetime.ParseDate(date).year),
+        content_rating='X',
+        thumb=thumb,
+        art=art)
+
+    return vco
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    """
+    This function should create and return a list of media objects and part objects representing
+    the media available at the given URL. Callbacks may be used if obtaining the final media
+    location requires additional computation.
+    """
+
+    mo = []
+    fmt_list = ['720', '360']
+    prefs = get_prefs()
+
+    if prefs['force_tc'] == 'true':
+        for f in fmt_list:
+            mo.append(MediaObject(
+                parts=[PartObject(key=Callback(PlayVideo, url=url, fmt=f))],
+                video_resolution=f,
+                audio_channels=2,
+                optimized_for_streaming=False
+                ))
+    else:
+        for f in fmt_list:
+            mo.append(MediaObject(
+                parts=[PartObject(key=Callback(PlayVideo, url=url, fmt=f))],
+                video_resolution=f,
+                container=Container.MP4,
+                video_codec=VideoCodec.H264,
+                audio_codec=AudioCodec.AAC,
+                audio_channels=2,
+                optimized_for_streaming=True
+                ))
+
+    return mo
+
+####################################################################################################
+@indirect
+def PlayVideo(url, fmt, **kwargs):
+    """Format the video url depending of version"""
+
+    html = HTML.ElementFromURL(url)
+
+    Log.Debug('*' * 80)
+    prefs = get_prefs()
+    vurl = None
+    if prefs['server'] == '1':
+        openload_server = [s for s in html.xpath('//div[@class="server"]/a/@href') if 'episode_id' in s]
+        if openload_server:
+            vurl = get_openload_url(openload_server[0])
+
+    if not vurl:
+        fmt_dict = {'37': '1080', '22': '720', '18': '360', 'ol': 'openload'}
+        urls = []
+        if html.xpath('//video'):
+            for s in html.xpath('//video/source/@src'):
+                mp4 = Regex('mime\=(video/mp4)').search(s)
+                if mp4:
+                    itag = Regex('itag\=(\d+)').search(s).group(1)
+                    urls.append((fmt_dict[itag], s))
+        elif html.xpath('//iframe'):
+            ol = html.xpath('//iframe/@src')
+            if ol:
+                urls.append(('ol', get_openload_url(ol[0])))
+
+        if not urls:
+            raise Ex.MediaNotAvailable
+
+        for h, u in sorted(urls):
+            vurl = u
+            if fmt == h:
+                break
+
+    Log.Debug('* PlayVideo URL = %s' %vurl)
+    Log.Debug('*' * 80)
+
+    if vurl:
+        return IndirectResponse(VideoClipObject, key=vurl)
+    else:
+        raise Ex.MediaNotAvailable
+
+####################################################################################################
+def get_openload_url(openload_url):
+    """Get Openload video stream URL"""
+
+    if 'openload' not in openload_url:
+        page_text = HTTP.Request(openload_url).content
+        openload = Regex('src\=\"(https?\:\/\/openload.+?)\"').search(page_text)
+        if openload:
+            openload_url = openload.group(1)
+
+    try:
+        base = Regex('(https?:\/\/openload.+?)\/\w+\/(.*?)(?:\/|$)').search(openload_url)
+        s = HTTP.Request(base.group(1) + '/embed/' + base.group(2), encoding=('utf-8')).content
+        url = decode_openload(s)
+    except Exception as e:
+        Log.Error('* OpenLoad Error: Something went wrong, cannot access %s' %openload_url)
+        Log.Error('* OpenLoad Error: %s' %str(e))
+        url = False
+
+    return url
+
+####################################################################################################
+def get_prefs():
+    """
+    Get Prefs
+    If a new key has not been added yet, do so here
+    """
+
+    prefs = GetPrefs()
+    if not 'force_tc' in prefs.keys():
+        prefs.update({'force_tc': 'false'})
+    if not 'server' in prefs.keys():
+        prefs.update({'server': 'false'})
+
+    return prefs
