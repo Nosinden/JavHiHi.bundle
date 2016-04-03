@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+##### 1.0.2
+- _04/03/2016_
+  - Fixed empty video list error
+
 ##### 1.0.1
 - _04/03/2016_
   - Added [Updater](https://github.com/kolsys/plex-channel-updater)

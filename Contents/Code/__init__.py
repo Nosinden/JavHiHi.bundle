@@ -385,7 +385,10 @@ def DirectoryList(title, href, page):
             key=Callback(DirectoryList, title=title, href=nhref, page=page + 1),
             title='Next Page>>'))
 
-    return oc
+    if len(oc) > 0:
+        return oc
+    else:
+        return MC.message_container('Videos', 'Video List Empty')
 
 ####################################################################################################
 @route(PREFIX + '/videopage', video_info=dict)
