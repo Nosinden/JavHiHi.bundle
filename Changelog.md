@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+##### 1.0.3
+- _04/05/2016_
+  - Fixed Bookmark Caching error
+  - Fixed Video removed error
+  - Fixed Metadata errors
+
 ##### 1.0.2
 - _04/03/2016_
   - Fixed empty video list error
