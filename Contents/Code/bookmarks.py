@@ -11,7 +11,6 @@ class Bookmark(object):
         self.prefix = prefix
         self.bm_add_icon = bm_add_icon
         self.bm_rm_icon = bm_rm_icon
-        self.bm = Dict['Bookmarks']
 
         Route.Connect(self.prefix + '/bookmark/add', self.add)
         Route.Connect(self.prefix + '/bookmark/remove', self.remove)
@@ -20,7 +19,8 @@ class Bookmark(object):
     def bookmark_exist(self, item_id, category):
         """Test if bookmark exist"""
 
-        return ((True if [b['id'] for b in self.bm[category] if b['id'] == item_id] else False) if category in self.bm.keys() else False) if self.bm else False
+        bm = Dict['Bookmarks']
+        return ((True if [b['id'] for b in bm[category] if b['id'] == item_id] else False) if category in bm.keys() else False) if bm else False
 
     ################################################################################################
     def message_container(self, header, message):
@@ -43,21 +43,22 @@ class Bookmark(object):
             'id': item_id, 'title': title, 'url': url, 'thumb': thumb, 'date': date,
             'category': category, 'duration': duration, 'tagline': tagline, 'summary': summary
             }
+        bm = Dict['Bookmarks']
 
-        if not self.bm:
+        if not bm:
             Dict['Bookmarks'] = {category: [new_bookmark]}
             Dict.Save()
 
             return self.message_container('Bookmarks',
                 '\"%s\" has been added to your \"%s\" bookmark list.' %(title, category))
-        elif category in self.bm.keys():
-            if (True if [b['id'] for b in self.bm[category] if b['id'] == item_id] else False):
+        elif category in bm.keys():
+            if (True if [b['id'] for b in bm[category] if b['id'] == item_id] else False):
 
                 return self.message_container('Warning',
                     '\"%s\" is already in your \"%s\" bookmark list.' %(title, category))
             else:
                 temp = {}
-                temp.setdefault(category, self.bm[category]).append(new_bookmark)
+                temp.setdefault(category, bm[category]).append(new_bookmark)
                 Dict['Bookmarks'][category] = temp[category]
                 Dict.Save()
 
@@ -78,8 +79,9 @@ class Bookmark(object):
         then Remove the Bookmark Dictionary also
         """
 
+        bm = Dict['Bookmarks']
         if self.bookmark_exist(item_id, category):
-            bm_c = self.bm[category]
+            bm_c = bm[category]
             for i in xrange(len(bm_c)):
                 if bm_c[i]['id'] == item_id:
                     bm_c.pop(i)

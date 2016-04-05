@@ -329,7 +329,7 @@ def PornstarSubList(title, href, pid, thumb):
             'thumb': thumb, 'url': href, 'tagline': 'none', 'date': 'none',
             'summary': 'none', 'category': 'Pornstar'
             }
-    BM.add_remove_bookmark(oc, bm_info)
+    BM.add_remove_bookmark(oc, dict(bm_info))
 
     return oc
 
@@ -404,12 +404,12 @@ def VideoPage(video_info):
     header = None
     message = None
     duration = video_info['duration']
-    summary = video_info['summary'] if 'summary' in video_info.keys() else None
+    summary = video_info['summary'] if 'summary' in video_info.keys() else 'NA'
     error = False
     match = BM.bookmark_exist(item_id=video_info['id'], category='Video')
     video_info.update({'category': 'Video', 'summary': summary})
     if match:
-        error = html.xpath('//meta[@content="Erros"]')
+        error = html.xpath('//meta[@content="Errors"]')
         if error:
             header = video_info['title']
             message = 'This video is no longer available.'
@@ -426,11 +426,11 @@ def VideoPage(video_info):
             dur = Regex('Duration\:\ (\d+)(.+)').search(p0)
             duration = int(dur.group(1).strip()) * (60000 if 'min' in dur.group(2) else 3600000)
 
-            summary = md.xpath('./p')[1].text_content().strip()
+            summary2 = md.xpath('./p')[1].text_content().strip()
             genres = md.xpath('//ul[@class="links links-categories"]/li/a/text()')
             tags = md.xpath('//ul[@class="links links-tags"]/li/a/text()')
 
-        video_info.update({'duration': str(duration), 'summary': summary})
+        video_info.update({'duration': str(duration) if duration else 'none', 'summary': summary})
 
         oc.add(VideoClipObject(
             title=video_info['title'],
@@ -438,7 +438,7 @@ def VideoPage(video_info):
             tagline=video_info['tagline'],
             originally_available_at=Datetime.ParseDate(video_info['date']),
             year=int(Datetime.ParseDate(video_info['date']).year),
-            summary=summary,
+            summary=summary2 if summary2 else summary,
             genres=genres,
             tags=tags,
             duration=duration,
@@ -461,6 +461,6 @@ def VideoPage(video_info):
             title='Pornstar(s) in Video', thumb=R('icon-pornstar.png')
             ))
 
-    BM.add_remove_bookmark(oc=oc, bm_info=video_info)
+    BM.add_remove_bookmark(oc, dict(video_info))
 
     return oc
