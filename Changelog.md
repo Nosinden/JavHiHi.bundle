@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+##### 1.0.4
+- _05/27/2016_
+  - Update - Adult star list, now includes video count
+  - Update - Improved video page adult star list
+
 ##### 1.0.3
 - _04/05/2016_
   - Fixed Bookmark Caching error

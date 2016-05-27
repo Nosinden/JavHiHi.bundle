@@ -6,8 +6,7 @@
 import messages
 import bookmarks
 from updater import Updater
-from DumbTools import DumbKeyboard
-from DumbTools import DumbPrefs
+from DumbTools import DumbKeyboard, DumbPrefs
 
 TITLE = L('title')
 PREFIX = '/video/javhihi'
@@ -268,7 +267,7 @@ def BookmarksSub(category):
 
 ####################################################################################################
 @route(PREFIX + '/pornstar/list', page=int)
-def PornstarList(title, href, page):
+def PornstarList(title, href, page, oc=False, container=True):
     """Setup Pornstar list"""
 
     url = BASE_URL + href
@@ -279,7 +278,8 @@ def PornstarList(title, href, page):
     else:
         main_title = title
 
-    oc = ObjectContainer(title2=main_title)
+    if not oc:
+        oc = ObjectContainer(title2=main_title)
 
     for p in html.xpath('//div[@class="pornstar-item"]'):
         a0 = p.xpath('.//a')[0]
@@ -288,21 +288,26 @@ def PornstarList(title, href, page):
         pid = phref.split('/', 2)[2].rsplit('.', 1)[-2]
         pname = a0.get('title')
         thumb = a0.xpath('./img/@src')[0]
+        mcount = p.xpath('.//span[@class="total-like"]')
+        pmname = pname
+        if mcount:
+            pmname = '%s (%s)' %(pname, mcount[0].text_content().strip())
 
         oc.add(DirectoryObject(
             key=Callback(PornstarSubList,
                 title='%s / %s' %(title, pname), href=phref, pid=pid, thumb=thumb),
-            title=pname, thumb=thumb
+            title=pmname, thumb=thumb
             ))
 
-    if href_next:
+    if href_next and container:
         nhref = href_next[0]
         nhref = nhref if nhref.startswith('/') else '/' + nhref
         oc.add(NextPageObject(
             key=Callback(PornstarList, title=title, href=nhref, page=page + 1),
             title='Next Page>>'))
 
-    return oc
+    if container:
+        return oc
 
 ####################################################################################################
 @route(PREFIX + '/pornstar/list/sub')
@@ -455,11 +460,15 @@ def VideoPage(video_info):
             title='Suggested Videos', thumb=s_thumb
             ))
 
-    if not error:
-        oc.add(DirectoryObject(
-            key=Callback(PornstarList, title='Pornstars', href=video_info['url'], page=1),
-            title='Pornstar(s) in Video', thumb=R('icon-pornstar.png')
-            ))
+    plstar = html.xpath('//div[@class="pornstar-item"]')
+    if plstar and (not error):
+        if (len(plstar) == 1):
+            PornstarList(title='Pornstars', href=video_info['url'], page=1, oc=oc, container=False)
+        else:
+            oc.add(DirectoryObject(
+                key=Callback(PornstarList, title='Pornstars', href=video_info['url'], page=1),
+                title='Pornstars in Video', thumb=R('icon-pornstar.png')
+                ))
 
     BM.add_remove_bookmark(oc, dict(video_info))
 
