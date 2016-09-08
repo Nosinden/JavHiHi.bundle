@@ -1,0 +1,8 @@
+[
+  {
+    "id": "force_tc",
+    "label": "Force Transcoding",
+    "type": "bool",
+    "default": "False"
+  }
+]

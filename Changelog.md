@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+##### 1.0.5
+- _09/08/2016_
+  - Fixed - Preferences for PMS `v1.1.3`
+  - Update - Removed Openload support
+  - Update - Cleaned ServiceCode
+  - Update - DumbTools - added _Xbox One_ & _Apple TV v4_
+
 ##### 1.0.4
 - _05/27/2016_
   - Update - Adult star list, now includes video count

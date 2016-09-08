@@ -8,7 +8,7 @@ import bookmarks
 from updater import Updater
 from DumbTools import DumbKeyboard, DumbPrefs
 
-TITLE = L('title')
+TITLE = 'JavHiHi'
 PREFIX = '/video/javhihi'
 BASE_URL = 'http://javhihi.com'
 
