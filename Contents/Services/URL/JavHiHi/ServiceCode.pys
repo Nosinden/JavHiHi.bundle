@@ -50,6 +50,9 @@ def MediaObjectsForURL(url):
         if (s.get('type') == "video/mp4"):
             fmt_list.append(s.get('data-res'))
 
+    if not fmt_list:
+        raise Ex.MediaExpired
+
     if Prefs['force_tc']:
         Log.Debug('* Force Transcoding ON')
         for f in fmt_list:

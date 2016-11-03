@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+##### 1.0.6
+- _11/03/2016_
+  - Added check for offline videos
+
 ##### 1.0.5
 - _09/08/2016_
   - Fixed - Preferences for PMS `v1.1.3`

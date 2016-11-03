@@ -411,6 +411,7 @@ def VideoPage(video_info):
     duration = video_info['duration']
     summary = video_info['summary'] if 'summary' in video_info.keys() else 'NA'
     error = False
+    offline = False
     match = BM.bookmark_exist(item_id=video_info['id'], category='Video')
     video_info.update({'category': 'Video', 'summary': summary})
     if match:
@@ -437,20 +438,25 @@ def VideoPage(video_info):
 
         video_info.update({'duration': str(duration) if duration else 'none', 'summary': summary})
 
-        oc.add(VideoClipObject(
-            title=video_info['title'],
-            source_title='JavHiHi',
-            tagline=video_info['tagline'],
-            originally_available_at=Datetime.ParseDate(video_info['date']),
-            year=int(Datetime.ParseDate(video_info['date']).year),
-            summary=summary2 if summary2 else summary,
-            genres=genres,
-            tags=tags,
-            duration=duration,
-            thumb=video_info['thumb'],
-            url=url
-            ))
-
+        if [s.get('data-res') for s in html.xpath('//video/source') if (s.get('type') == "video/mp4")]:
+            oc.add(VideoClipObject(
+                title=video_info['title'],
+                source_title='JavHiHi',
+                tagline=video_info['tagline'],
+                originally_available_at=Datetime.ParseDate(video_info['date']),
+                year=int(Datetime.ParseDate(video_info['date']).year),
+                summary=summary2 if summary2 else summary,
+                genres=genres,
+                tags=tags,
+                duration=duration,
+                thumb=video_info['thumb'],
+                url=url
+                ))
+        else:
+            Log.Warn(u"* video offline for '{}'".format(url))
+            offline = True
+            oc.header = "Warning"
+            oc.message = u"WARNING: Video Offline for '{}'".format(video_info['title'])
 
     similar_node = html.xpath('//div[@class="video-item"]')
     if similar_node:
@@ -470,6 +476,9 @@ def VideoPage(video_info):
                 title='Pornstars in Video', thumb=R('icon-pornstar.png')
                 ))
 
-    BM.add_remove_bookmark(oc, dict(video_info))
+    if offline and (BM.bookmark_exist(video_info['id'], video_info['category']) == False):
+        Log.Info(u"* Skip 'add boomark' for offline video for '{}'".format(url))
+    else:
+        BM.add_remove_bookmark(oc, dict(video_info))
 
     return oc
